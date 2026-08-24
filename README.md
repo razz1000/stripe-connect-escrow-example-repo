@@ -57,6 +57,8 @@ Options 1 and 2 are shown at the bottom of this README. Option 3 is the main cod
 
 Separate charges and transfers require the platform and the connected account to be in the **same region** (both US, both EU, etc.). Check [Stripe's current docs](https://docs.stripe.com/connect/separate-charges-and-transfers) for your countries before building on this.
 
+**Match the currency to your platform's settlement currency.** A transfer with `source_transaction` must be in the currency the charge settled in on *your* balance. If your platform settles in EUR and you charge in USD, Stripe converts the charge to EUR and the USD transfer fails with `The currency of source_transaction's balance transaction (eur) must be the same as the transfer currency (usd)`. So: EU platform, create the seller in an EU country and charge in `eur`; US platform, US seller and `usd`. The examples below use US/usd; swap both if your platform is in Europe.
+
 ---
 
 ## Setup
@@ -87,7 +89,7 @@ Set `HOLD_HOURS=0` in `.env` while testing so you don't wait a day.
 
 ## Walkthrough
 
-**1. Create a seller** (Express account, `transfers` capability). Open the returned `onboardingUrl` and complete Stripe's test onboarding once, so the account can receive transfers.
+**1. Create a seller** (Express account, `card_payments` + `transfers` capabilities; Stripe won't grant `transfers` alone to a US account). Open the returned `onboardingUrl` and complete Stripe's test onboarding once, so the account can receive transfers.
 
 ```bash
 curl -X POST localhost:4242/sellers -H 'content-type: application/json' \
@@ -153,7 +155,7 @@ curl -X POST localhost:4242/orders/order_.../refund
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^5.2.1",
     "stripe": "^17.0.0"
   }
 }
@@ -293,7 +295,8 @@ app.post('/sellers', async (req, res) => {
     type: 'express',
     country,
     email,
-    capabilities: { transfers: { requested: true } },
+    // US accounts can't request transfers without card_payments (Stripe rule).
+    capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
     // Option 1 from the README would go here:
     // settings: { payouts: { schedule: { delay_days: 7 } } },
   });
@@ -474,6 +477,12 @@ app.get('/success', (req, res) => res.send(`Paid. Order ${req.query.order} is no
 app.get('/cancel', (req, res) => res.send('Checkout cancelled.'));
 app.get('/sellers/:id/done', (req, res) => res.send('Onboarding complete. You can close this tab.'));
 app.get('/sellers/:id/onboard', (req, res) => res.send('Onboarding link expired. Create a new one via POST /sellers.'));
+
+// Any Stripe error becomes a 500 with the message, instead of crashing the process.
+app.use((err, req, res, next) => {
+  console.error(err.message);
+  res.status(err.statusCode || 500).json({ error: err.message });
+});
 
 app.listen(PORT, () => console.log(`Escrow example on ${BASE_URL} (hold ${HOLD_HOURS}h, fee ${FEE_PERCENT}%)`));
 ```

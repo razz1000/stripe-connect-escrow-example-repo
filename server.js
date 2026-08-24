@@ -70,7 +70,8 @@ app.post('/sellers', async (req, res) => {
     type: 'express',
     country,
     email,
-    capabilities: { transfers: { requested: true } },
+    // US accounts can't request transfers without card_payments (Stripe rule).
+    capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
     // Option 1 from the README would go here:
     // settings: { payouts: { schedule: { delay_days: 7 } } },
   });
@@ -251,5 +252,11 @@ app.get('/success', (req, res) => res.send(`Paid. Order ${req.query.order} is no
 app.get('/cancel', (req, res) => res.send('Checkout cancelled.'));
 app.get('/sellers/:id/done', (req, res) => res.send('Onboarding complete. You can close this tab.'));
 app.get('/sellers/:id/onboard', (req, res) => res.send('Onboarding link expired. Create a new one via POST /sellers.'));
+
+// Any Stripe error becomes a 500 with the message, instead of crashing the process.
+app.use((err, req, res, next) => {
+  console.error(err.message);
+  res.status(err.statusCode || 500).json({ error: err.message });
+});
 
 app.listen(PORT, () => console.log(`Escrow example on ${BASE_URL} (hold ${HOLD_HOURS}h, fee ${FEE_PERCENT}%)`));
