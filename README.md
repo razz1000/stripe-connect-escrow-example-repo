@@ -2,7 +2,7 @@
 
 Hold a buyer's payment on your platform, pay the seller only after the job is done, keep your commission, refund cleanly on both sides of the release.
 
-Built for the video **"Stripe Connect Escrow: Hold Funds Until the Job Is Done (2026)"** on [The Marketplace Guy](https://www.youtube.com/@themarketplaceguy). Companion to the [deferred onboarding example](https://github.com/razz1000/stripe-connect-deferred-onboarding-example-repo), which covers *how sellers get a Stripe account*. This repo covers *when their money moves*.
+Built for the video **[Stripe Connect Escrow: Hold Funds Until the Job Is Done (2026)](https://youtu.be/dw-y9XuKJaw)** on [The Marketplace Guy](https://www.youtube.com/@themarketplaceguy). Companion to the [deferred onboarding example](https://github.com/razz1000/stripe-connect-deferred-onboarding-example-repo), which covers *how sellers get a Stripe account*. This repo covers *when their money moves*.
 
 The scenario from the comments: a customer pays for a 60-minute session, the platform takes 20%, the provider is paid 24 hours after the session. Every number is an environment variable.
 
